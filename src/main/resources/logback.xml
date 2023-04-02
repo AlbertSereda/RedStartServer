@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 minutes">
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+    <!-- <property name="LOG_PATH" value="/opt/RedStartSever/logs"/> -->
+    <property name="LOG_PATH" value="E:\\JavaProjects\\RedStart\\red-start-server\\server\\logs"/>
+
+    <!--
+    <appender name="Mail" class="ch.qos.logback.classic.net.SMTPAppender">
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <smtpHost>smtp.yandex.ru</smtpHost>
+        <smtpPort>465</smtpPort>
+        <SSL>true</SSL>
+        <username>support@turborender.com</username>
+        <password>z@f1FF4I</password>
+        <to>tech@turborender.com,support@turborender.com</to>
+        <from>support@turborender.com</from>
+        <subject>DTL RenderApp Backend Error</subject>
+        <layout class="ch.qos.logback.classic.html.HTMLLayout"/>
+    </appender>
+    -->
+
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d [%-5level] %t [%C{2}:%L] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="RollingFileAppender"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/app.log</file>
+        <encoder>
+            <Pattern>%d [%-5level] %t [%C{2}:%L] %msg%n</Pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- rollover daily -->
+            <fileNamePattern>${LOG_PATH}/archived/app.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>365</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <root level="info">
+        <appender-ref ref="Console"/>
+        <appender-ref ref="RollingFileAppender"/>
+        <!-- <appender-ref ref="Mail"/> -->
+    </root>
+</configuration>
