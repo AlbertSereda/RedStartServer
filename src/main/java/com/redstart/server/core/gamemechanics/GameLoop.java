@@ -1,12 +1,18 @@
 package com.redstart.server.core.gamemechanics;
 
 import com.redstart.server.core.SocketClient;
-import com.redstart.server.core.SocketHandler;
 import com.redstart.server.core.gamemechanics.spells.interfaces.WithTimeSpell;
 import com.redstart.server.core.jsonclasses.Monster;
 import com.redstart.server.core.jsonclasses.Player;
+import com.redstart.server.core.message.SocketDataUpdater;
+import com.redstart.server.core.message.SocketEventType;
+import com.redstart.server.core.message.requestdata.adventure.GameOverRequestData;
+import com.redstart.server.core.message.requestdata.adventure.StepRequestData;
+import com.redstart.server.core.message.responsedata.adventure.AdventureResponseData;
+import com.redstart.server.core.repository.GameRoomRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -17,29 +23,26 @@ import java.util.concurrent.locks.Lock;
 public class GameLoop implements Runnable {
 
     private static final Logger log = LoggerFactory.getLogger(GameLoop.class);
-    public static final int FRAME_SERVER = 30;
+    public final int frameServer;
 
     private final Map<SocketClient, GameRoom> gameRooms;
 
-    private final GameRoomExecutor gameRoomExecutor;
-    private GameLogicExecutor gameLogicExecutor;
-
     private final GameLogic gameLogic;
 
-    private final SocketHandler socketHandler;
+    private final SocketDataUpdater dataUpdater;
 
-    public GameLoop(GameRoomExecutor gameRoomExecutor,
-                    GameLogicExecutor gameLogicExecutor,
+    public GameLoop(GameRoomRepository gameRoomRepository,
                     GameLogic gameLogic,
-                    SocketHandler socketHandler) {
-        this.gameRoomExecutor = gameRoomExecutor;
-        this.gameRooms = gameRoomExecutor.getGameRooms();
-        this.gameLogicExecutor = gameLogicExecutor;
+                    SocketDataUpdater dataUpdater,
+                    @Value("${adventure.frameServer}") int frameServer) {
+        this.gameRooms = gameRoomRepository.getGameRooms();
         this.gameLogic = gameLogic;
-        this.socketHandler = socketHandler;
+        this.dataUpdater = dataUpdater;
+        this.frameServer = frameServer;
         new Thread(this).start();
     }
 
+    //TODO из за паузы не удаляются комнаты
     @Override
     public void run() {
         while (true) {
@@ -51,10 +54,7 @@ public class GameLoop implements Runnable {
                     continue;
                 }
 
-                Monster monster = gameRoom.getMonster();
                 GameState gameState = gameRoom.getAdventureData().getGameState();
-
-                List<WithTimeSpell> activeSpells = gameRoom.getPlayer().getActiveSpellForServer();
 
                 switch (gameState) {
                     case WIN:
@@ -62,30 +62,43 @@ public class GameLoop implements Runnable {
                         clearActiveSpell(gameRoom);
                         break;
                     case RESUME:
-                        int fixSize = 0;
-                        for (int i = 0; i < activeSpells.size() - fixSize; i++) {
-                            WithTimeSpell spell = activeSpells.get(i);
+//                        int fixSize = 0;
+//                        for (int i = 0; i < activeSpells.size() - fixSize; i++) {
+//                            WithTimeSpell spell = activeSpells.get(i);
+//                            spell.update();
+//                            if (spell.getTimeToEnd() <= 0) {
+//                                spell.deactivate();
+//                                gameRoom.getPlayer().removeActiveSpell(activeSpells.get(i));
+//                                fixSize++;
+//                            }
+//                        }
+                        Player player = gameRoom.getPlayer();
+                        List<WithTimeSpell> activeSpells = player.getActiveSpellForServer();
+
+                        activeSpells.stream().forEach(spell -> {
                             spell.update();
                             if (spell.getTimeToEnd() <= 0) {
                                 spell.deactivate();
-                                gameRoom.getPlayer().removeActiveSpell(activeSpells.get(i));
-                                fixSize++;
+                                player.removeActiveSpell(spell);
                             }
-                        }
+                        });
 
+                        Monster monster = gameRoom.getMonster();
                         int currentSpeed = monster.getUpdateSpeedLogic().updateCurrentSpeed(monster.getMaxSpeed(), monster.getTimeCreation());
                         monster.setCurrentSpeed(currentSpeed);
                         if (monster.getCurrentSpeed() <= 0) {
-                            gameLogicExecutor.executeMove(socketClient, Move.MONSTER);
+                            //gameLogicExecutor.executeMove(socketClient, Move.MONSTER);
+                            dataUpdater.updateData(SocketEventType.ADVENTURE_MONSTER_STEP, new StepRequestData(), socketClient);
                             monster.setNewTimeCreation();
                         }
 
                         long now = System.currentTimeMillis();
-                        if ((now - gameRoom.getLastAddToBuffer()) >= FRAME_SERVER) {
+                        if ((now - gameRoom.getLastAddToBuffer()) >= frameServer) {
                             Lock lock = gameRoom.getLock();
                             if (lock.tryLock()) {
                                 try {
-                                    socketHandler.addToQueueObject(socketClient, gameRoom);
+                                    //socketHandler.addToWriteObject(socketClient, gameRoom);
+                                    dataUpdater.updateFrame(SocketEventType.ADVENTURE_UPDATE_FRAME, socketClient, AdventureResponseData.of(gameRoom));
                                     gameRoom.setLastAddToBuffer(now);
                                 } finally {
                                     lock.unlock();
@@ -104,11 +117,8 @@ public class GameLoop implements Runnable {
 
     public void gameOver(SocketClient socketClient, GameRoom gameRoom) {
         gameRoom.getIsGameOver().set(true);
-        gameLogicExecutor.executeGameOver(socketClient, gameRoom);
-    }
-
-    public void setGameLogicExecutor(GameLogicExecutor gameLogicExecutor) {
-        this.gameLogicExecutor = gameLogicExecutor;
+        dataUpdater.updateData(SocketEventType.ADVENTURE_GAME_OVER, new GameOverRequestData(socketClient), socketClient);
+        //gameLogicExecutor.executeGameOver(socketClient, gameRoom);
     }
 
     private void clearActiveSpell(GameRoom gameRoom) {

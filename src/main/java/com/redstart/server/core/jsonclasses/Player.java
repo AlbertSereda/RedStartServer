@@ -1,8 +1,6 @@
 package com.redstart.server.core.jsonclasses;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.redstart.server.core.gamemechanics.GameRoomExecutor;
-import com.redstart.server.core.gamemechanics.spells.NextDamageProtectionSpell;
 import com.redstart.server.core.gamemechanics.spells.interfaces.Spell;
 import com.redstart.server.core.gamemechanics.spells.interfaces.WithTimeSpell;
 import org.slf4j.Logger;

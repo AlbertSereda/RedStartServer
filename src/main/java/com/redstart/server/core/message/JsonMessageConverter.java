@@ -7,12 +7,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class MessageHandler {
-    private static final Logger log = LoggerFactory.getLogger(MessageHandler.class);
+public class JsonMessageConverter {
+    private static final Logger log = LoggerFactory.getLogger(JsonMessageConverter.class);
 
     private final ObjectMapper objectMapper;
 
-    public MessageHandler(ObjectMapper objectMapper) {
+    public JsonMessageConverter(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
@@ -39,6 +39,7 @@ public class MessageHandler {
         try {
             return objectMapper.readValue(message, SocketMessage.class);
         } catch (JsonProcessingException e) {
+            e.printStackTrace();
             throw new RuntimeException("Error convert JSON to SocketMessage - " + message);
         }
     }

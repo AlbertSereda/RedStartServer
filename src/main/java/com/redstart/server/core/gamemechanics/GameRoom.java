@@ -1,15 +1,14 @@
 package com.redstart.server.core.gamemechanics;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.redstart.server.core.gamemechanics.logicstrategy.BasicMonsterMoveLogicImpl;
 import com.redstart.server.core.gamemechanics.logicstrategy.BasicUpdateSpeedLogicImpl;
 import com.redstart.server.core.gamemechanics.spells.FireBallSpell;
 import com.redstart.server.core.gamemechanics.spells.NextDamageProtectionSpell;
 import com.redstart.server.core.gamemechanics.spells.StanSpell;
 import com.redstart.server.core.gamemechanics.spells.interfaces.WithTimeSpell;
-import com.redstart.server.core.jsonclasses.AdventureData;
 import com.redstart.server.core.jsonclasses.Monster;
 import com.redstart.server.core.jsonclasses.Player;
+import com.redstart.server.core.message.responsedata.adventure.AdventureResponseData;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,7 +23,7 @@ public class GameRoom {
 
     private GameLogic gameLogic;
 
-    private final AdventureData adventureData;
+    private final AdventureResponseData adventureData;
 
     private AtomicBoolean isGameOver;
 
@@ -55,7 +54,7 @@ public class GameRoom {
         lock = new ReentrantLock();
         this.gameLogic = gameLogic;
         gameLogic.fillFieldForServer(player);
-        adventureData = new AdventureData(player, monster, GameState.RESUME);
+        adventureData = new AdventureResponseData(player, monster, GameState.RESUME);
 
         lastAddToBuffer = System.currentTimeMillis();
     }
@@ -103,7 +102,7 @@ public class GameRoom {
         this.gameLogic = gameLogic;
     }
 
-    public AdventureData getAdventureData() {
+    public AdventureResponseData getAdventureData() {
         return adventureData;
     }
 

@@ -2,7 +2,6 @@ package com.redstart.server.core.gamemechanics;
 
 import com.redstart.server.core.SocketClient;
 import com.redstart.server.core.gamemechanics.block.ColorBlock;
-import com.redstart.server.core.gamemechanics.spells.StanSpell;
 import com.redstart.server.core.gamemechanics.spells.interfaces.Spell;
 import com.redstart.server.core.jsonclasses.Monster;
 import com.redstart.server.core.jsonclasses.Player;
@@ -253,7 +252,7 @@ public class GameLogic {
         }
     }
 
-    //TODO переделать на мапу
+
     public void spellMove(GameRoom gameRoom, String nameSpell) {
         Player player = gameRoom.getPlayer();
         Map<String, Spell> availableSpells = player.getAvailableSpellsForServer();
@@ -288,14 +287,13 @@ public class GameLogic {
 //        }
     }
 
-    //TODO удалять комнату при game over
     public boolean checkGameOver(SocketClient socketClient, GameRoom gameRoom) {
         boolean isGameOver = false;
 
         GameState gameState = gameRoom.getAdventureData().getGameState();
 
         if ((gameRoom.getPlayer().getHp() <= 0) ||
-                (gameState == GameState.RESUME && !socketClient.getSocketChannel().isConnected())) {
+                ((gameState == GameState.RESUME || gameState == GameState.PAUSE) && !socketClient.getSocketChannel().isConnected())) {
             gameRoom.getAdventureData().setGameState(GameState.LOSE);
             isGameOver = true;
         } else if (gameRoom.getMonster().getHp() <= 0) {

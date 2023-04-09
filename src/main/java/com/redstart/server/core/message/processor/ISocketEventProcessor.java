@@ -1,10 +1,12 @@
 package com.redstart.server.core.message.processor;
 
-import com.redstart.server.core.gamemechanics.GameRoom;
-import com.redstart.server.core.message.SocketMessage;
+import com.redstart.server.core.SocketClient;
+import com.redstart.server.core.message.ISocketMessageData;
+import com.redstart.server.core.message.SocketEventType;
+import com.redstart.server.core.message.responsedata.ISocketMessageResponseData;
 
-public interface ISocketEventProcessor {
-    void process(SocketMessage socketMessage, GameRoom gameRoom);
+public interface ISocketEventProcessor<Q extends ISocketMessageData, R extends ISocketMessageResponseData> {
+    R process(Q data, SocketClient socketClient);
 
-    String getEventType();
+    SocketEventType getEventType();
 }

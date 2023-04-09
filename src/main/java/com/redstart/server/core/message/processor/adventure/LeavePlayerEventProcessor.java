@@ -2,22 +2,24 @@ package com.redstart.server.core.message.processor.adventure;
 
 import com.redstart.server.core.gamemechanics.GameRoom;
 import com.redstart.server.core.gamemechanics.GameState;
-import com.redstart.server.core.message.SocketMessage;
-import com.redstart.server.core.message.processor.ISocketEventProcessor;
+import com.redstart.server.core.message.SocketEventType;
+import com.redstart.server.core.message.requestdata.adventure.LeavePlayerRequestData;
 import org.springframework.stereotype.Component;
 
 @Component
-public class LeavePlayerEventProcessor implements ISocketEventProcessor {
+public class LeavePlayerEventProcessor extends AdventureSocketEventProcessor<LeavePlayerRequestData> {
+
     @Override
-    public void process(SocketMessage socketMessage, GameRoom gameRoom) {
-        GameState gameState = gameRoom.getAdventureData().getGameState();
-        if (gameState != GameState.LOSE && gameState != GameState.WIN) {
-            gameRoom.getPlayer().setHp(0);
-        }
+    public SocketEventType getEventType() {
+        return SocketEventType.ADVENTURE_LEAVE;
     }
 
     @Override
-    public String getEventType() {
-        return "leave";
+    protected void processEvent(LeavePlayerRequestData data, GameRoom gameRoom) {
+        GameState gameState = gameRoom.getAdventureData().getGameState();
+        if (gameState != GameState.LOSE && gameState != GameState.WIN) {
+            //TODO или меняем игровое состояние на lose, а сам game over обрабатываем в GameOverProcessor
+            gameRoom.getPlayer().setHp(0);
+        }
     }
 }

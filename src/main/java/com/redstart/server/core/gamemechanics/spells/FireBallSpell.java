@@ -1,7 +1,6 @@
 package com.redstart.server.core.gamemechanics.spells;
 
 import com.redstart.server.core.gamemechanics.GameRoom;
-import com.redstart.server.core.gamemechanics.block.YellowColorBlock;
 import com.redstart.server.core.gamemechanics.spells.interfaces.OneTimeSpell;
 import com.redstart.server.core.jsonclasses.SpellJson;
 import org.slf4j.Logger;

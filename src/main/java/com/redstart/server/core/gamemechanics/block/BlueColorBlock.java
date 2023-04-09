@@ -1,6 +1,5 @@
 package com.redstart.server.core.gamemechanics.block;
 
-import com.redstart.server.core.SocketHandler;
 import com.redstart.server.core.gamemechanics.GameRoom;
 import com.redstart.server.core.jsonclasses.Player;
 import org.slf4j.Logger;

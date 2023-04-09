@@ -1,14 +1,20 @@
 package com.redstart.server.core;
 
-import com.redstart.server.core.gamemechanics.GameRoom;
+import com.redstart.server.core.message.JsonMessageConverter;
+import com.redstart.server.core.message.SocketMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class SocketClient {
+    private static final Logger log = LoggerFactory.getLogger(SocketClient.class);
 
     private static final int READ_BUFFER_CAPACITY = 3000;
 
@@ -22,11 +28,41 @@ public class SocketClient {
 
     private final Queue<byte[]> writeToSocketQueue;
 
-    public SocketClient(SocketChannel socketChannel) {
+    private String login;
+
+    private final SocketHandler socketHandler;
+    private final Selector selector;
+    private final JsonMessageConverter jsonMessageConverter;
+
+    public SocketClient(SocketChannel socketChannel,
+                        SocketHandler socketHandler,
+                        Selector selector,
+                        JsonMessageConverter jsonMessageConverter) {
         this.socketChannel = socketChannel;
         this.writeBuffer = ByteBuffer.allocate(WRITE_BUFFER_CAPACITY);
         this.readBuffer = ByteBuffer.allocate(READ_BUFFER_CAPACITY);
         this.writeToSocketQueue = new LinkedBlockingQueue<>();
+        this.socketHandler = socketHandler;
+        this.selector = selector;
+        this.jsonMessageConverter = jsonMessageConverter;
+    }
+
+    public void addToWriteObject(SocketMessage socketMessage) {
+        byte[] sendMessage = jsonMessageConverter.objectToJson(socketMessage);
+        writeToBuffer(sendMessage);
+    }
+
+    private void writeToBuffer(byte[] bytesToWrite) {
+        if (socketHandler.getChannels().get(socketChannel) == null) {
+            return;
+        }
+        addToWriteQueue(bytesToWrite);
+        //TODO проверить, если 10 раз положить в очередь и один раз вызвать read, то сколько считает
+        try {
+            socketChannel.register(selector, SelectionKey.OP_WRITE);
+        } catch (ClosedChannelException e) {
+            log.info("Connection is close");
+        }
     }
 
     public SocketChannel getSocketChannel() {
@@ -47,5 +83,13 @@ public class SocketClient {
 
     public void addToWriteQueue(byte[] bytes) {
         writeToSocketQueue.add(bytes);
+    }
+
+    public String getLogin() {
+        return login;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
     }
 }

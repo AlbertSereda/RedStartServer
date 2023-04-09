@@ -1,9 +1,8 @@
 package com.redstart.server.core;
 
-import com.redstart.server.core.gamemechanics.GameLogicExecutor;
-import com.redstart.server.core.gamemechanics.GameRoom;
 import com.redstart.server.core.gamemechanics.GameRoomExecutor;
-import com.redstart.server.core.message.MessageHandler;
+import com.redstart.server.core.message.JsonMessageConverter;
+import com.redstart.server.core.message.SocketMessageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -26,25 +25,29 @@ public class SocketHandler implements Runnable {
 
     private final GameRoomExecutor gameRoomExecutor;
 
-    private final GameLogicExecutor gameLogicExecutor;
+    //private final GameLogicExecutor gameLogicExecutor;
 
-    private final MessageHandler messageHandler;
+    private final JsonMessageConverter jsonMessageConverter;
+
+    private final SocketMessageHandler socketMessageHandler;
 
     private Selector selector;
 
     public SocketHandler(GameRoomExecutor gameRoomExecutor,
-                         GameLogicExecutor gameLogicExecutor,
+                         //GameLogicExecutor gameLogicExecutor,
                          ServerSocketChannel serverSocketChannel,
-                         MessageHandler messageHandler) {
+                         JsonMessageConverter jsonMessageConverter,
+                         SocketMessageHandler socketMessageHandler) {
 
         this.gameRoomExecutor = gameRoomExecutor;
+        this.socketMessageHandler = socketMessageHandler;
         gameRoomExecutor.setSocketHandler(this);
 
-        this.gameLogicExecutor = gameLogicExecutor;
-        gameLogicExecutor.setSocketHandler(this);
+        //this.gameLogicExecutor = gameLogicExecutor;
+        //gameLogicExecutor.setSocketHandler(this);
 
         this.serverSocketChannel = serverSocketChannel;
-        this.messageHandler = messageHandler;
+        this.jsonMessageConverter = jsonMessageConverter;
 
         channels = new ConcurrentHashMap<>();
         new Thread(this).start();
@@ -112,13 +115,14 @@ public class SocketHandler implements Runnable {
             SocketChannel socketChannel = serverSocketChannel.accept();
             socketChannel.configureBlocking(false);
 
-            SocketClient socketClient = new SocketClient(socketChannel);
+            SocketClient socketClient = new SocketClient(socketChannel, this, selector, jsonMessageConverter);
 
             channels.put(socketChannel, socketClient);
+            socketChannel.register(selector, SelectionKey.OP_READ);
 
             log.info("Connected " + socketChannel + ", count client Online - " + channels.size());
 
-            gameRoomExecutor.createGameRoom(socketClient);
+            //gameRoomExecutor.createGameRoom(socketClient);
         } catch (IOException e) {
             log.info("Can not connect client");
         }
@@ -145,7 +149,9 @@ public class SocketHandler implements Runnable {
             String clientMessage = new String(readBuffer.array(), readBuffer.position(), readBuffer.limit());
 
             log.info("message from client - " + clientMessage.replaceAll("[\\n\\r]", ""));
-            gameLogicExecutor.addTasksToExecute(socketClient, clientMessage);
+            //gameLogicExecutor.addTasksToExecute(socketClient, clientMessage);
+
+            socketMessageHandler.handle(clientMessage, socketClient);
 
             readBuffer.clear();
         }
@@ -189,26 +195,31 @@ public class SocketHandler implements Runnable {
 
     }
 
-    private void writeToBuffer(SocketClient socketClient, byte[] bytesToWrite) {
-        SocketChannel socketChannel = socketClient.getSocketChannel();
-        if (channels.get(socketChannel) == null) {
-            return;
-        }
-        socketClient.addToWriteQueue(bytesToWrite);
-        //TODO проверить, если 10 раз положить в очередь и один раз вызвать read, то сколько считает
-        try {
-            socketChannel.register(selector, SelectionKey.OP_WRITE);
-        } catch (ClosedChannelException e) {
-            log.info("Connection is close");
-        }
-    }
+//    private void writeToBuffer(SocketClient socketClient, byte[] bytesToWrite) {
+//        SocketChannel socketChannel = socketClient.getSocketChannel();
+//        if (channels.get(socketChannel) == null) {
+//            return;
+//        }
+//        socketClient.addToWriteQueue(bytesToWrite);
+//        //TODO проверить, если 10 раз положить в очередь и один раз вызвать read, то сколько считает
+//        try {
+//            socketChannel.register(selector, SelectionKey.OP_WRITE);
+//        } catch (ClosedChannelException e) {
+//            log.info("Connection is close");
+//        }
+//    }
 
-    public void addToQueueObject(SocketClient socketClient, GameRoom gameRoom) {
-        byte[] sendMessage = messageHandler.objectToJson(gameRoom.getAdventureData());
-        gameRoom.getPlayer().getBlastedBlocks().clear();
-        gameRoom.getPlayer().getSpawnedBlocks().clear();
-        writeToBuffer(socketClient, sendMessage);
-    }
+//    public void addToWriteObject(SocketClient socketClient, GameRoom gameRoom) {
+//        byte[] sendMessage = jsonMessageConverter.objectToJson(gameRoom.getAdventureData());
+//        gameRoom.getPlayer().getBlastedBlocks().clear();
+//        gameRoom.getPlayer().getSpawnedBlocks().clear();
+//        writeToBuffer(socketClient, sendMessage);
+//    }
+
+//    public void addToWriteObject(SocketClient socketClient, SocketMessage socketMessage) {
+//        byte[] sendMessage = jsonMessageConverter.objectToJson(socketMessage);
+//        writeToBuffer(socketClient, sendMessage);
+//    }
 
     public Map<SocketChannel, SocketClient> getChannels() {
         return channels;
