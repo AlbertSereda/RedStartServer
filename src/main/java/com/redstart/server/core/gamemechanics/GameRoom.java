@@ -6,9 +6,9 @@ import com.redstart.server.core.gamemechanics.spells.FireBallSpell;
 import com.redstart.server.core.gamemechanics.spells.NextDamageProtectionSpell;
 import com.redstart.server.core.gamemechanics.spells.StanSpell;
 import com.redstart.server.core.gamemechanics.spells.interfaces.WithTimeSpell;
-import com.redstart.server.core.jsonclasses.Monster;
-import com.redstart.server.core.jsonclasses.Player;
-import com.redstart.server.core.message.responsedata.adventure.AdventureResponseData;
+import com.redstart.server.core.socket.jsonclasses.Monster;
+import com.redstart.server.core.socket.jsonclasses.Player;
+import com.redstart.server.core.socket.message.responsedata.adventure.AdventureResponseData;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -44,6 +44,11 @@ public class GameRoom {
         player.addAvailableSpell(new NextDamageProtectionSpell(this,
                 20,
                 0));
+
+        //TODO когда будет готово на клиенте то заменить фаерболом
+//        player.addAvailableSpell(new ArrowSpell(this,
+//                10,
+//                10));
 
         monster = new Monster(
                 "Sladkoeshka",

@@ -5,9 +5,9 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.redstart.server.core.message.ISocketMessageData;
-import com.redstart.server.core.message.SocketEventType;
-import com.redstart.server.core.message.SocketMessage;
+import com.redstart.server.core.socket.message.ISocketMessageData;
+import com.redstart.server.core.socket.message.SocketEventType;
+import com.redstart.server.core.socket.message.SocketMessage;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;

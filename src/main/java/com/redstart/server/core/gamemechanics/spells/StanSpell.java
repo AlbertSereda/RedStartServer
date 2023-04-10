@@ -3,8 +3,8 @@ package com.redstart.server.core.gamemechanics.spells;
 import com.redstart.server.core.gamemechanics.GameRoom;
 import com.redstart.server.core.gamemechanics.logicstrategy.interfaces.UpdateSpeedLogic;
 import com.redstart.server.core.gamemechanics.spells.interfaces.WithTimeSpell;
-import com.redstart.server.core.jsonclasses.Monster;
-import com.redstart.server.core.jsonclasses.SpellJson;
+import com.redstart.server.core.socket.jsonclasses.Monster;
+import com.redstart.server.core.socket.jsonclasses.SpellJson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

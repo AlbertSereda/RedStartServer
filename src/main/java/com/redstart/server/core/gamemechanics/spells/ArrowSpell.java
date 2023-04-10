@@ -6,14 +6,14 @@ import com.redstart.server.core.socket.jsonclasses.SpellJson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FireBallSpell implements OneTimeSpell {
-    private static final Logger log = LoggerFactory.getLogger(FireBallSpell.class);
+public class ArrowSpell implements OneTimeSpell {
+    private static final Logger log = LoggerFactory.getLogger(ArrowSpell.class);
     private final GameRoom gameRoom;
     private final int cost;
     private final int damage;
     private final SpellJson spellJson;
 
-    public FireBallSpell(GameRoom gameRoom, int cost, int damage) {
+    public ArrowSpell(GameRoom gameRoom, int cost, int damage) {
         this.gameRoom = gameRoom;
         this.cost = cost;
         this.damage = damage;
@@ -35,7 +35,7 @@ public class FireBallSpell implements OneTimeSpell {
 
     @Override
     public String getNameSpell() {
-        return "fireBall";
+        return "arrow";
     }
 
     @Override

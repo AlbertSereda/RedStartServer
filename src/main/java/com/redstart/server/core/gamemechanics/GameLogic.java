@@ -1,10 +1,10 @@
 package com.redstart.server.core.gamemechanics;
 
-import com.redstart.server.core.SocketClient;
+import com.redstart.server.core.socket.SocketClient;
 import com.redstart.server.core.gamemechanics.block.ColorBlock;
 import com.redstart.server.core.gamemechanics.spells.interfaces.Spell;
-import com.redstart.server.core.jsonclasses.Monster;
-import com.redstart.server.core.jsonclasses.Player;
+import com.redstart.server.core.socket.jsonclasses.Monster;
+import com.redstart.server.core.socket.jsonclasses.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

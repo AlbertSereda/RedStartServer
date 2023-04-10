@@ -1,9 +1,9 @@
 package com.redstart.server.core.gamemechanics;
 
-import com.redstart.server.core.SocketClient;
-import com.redstart.server.core.SocketHandler;
-import com.redstart.server.core.message.JsonMessageConverter;
-import com.redstart.server.core.repository.GameRoomRepository;
+import com.redstart.server.core.socket.SocketClient;
+import com.redstart.server.core.socket.SocketHandler;
+import com.redstart.server.core.socket.message.JsonMessageConverter;
+import com.redstart.server.core.socket.repository.GameRoomRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

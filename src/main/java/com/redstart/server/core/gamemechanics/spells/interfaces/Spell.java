@@ -1,7 +1,7 @@
 package com.redstart.server.core.gamemechanics.spells.interfaces;
 
-import com.redstart.server.core.jsonclasses.Player;
-import com.redstart.server.core.jsonclasses.SpellJson;
+import com.redstart.server.core.socket.jsonclasses.Player;
+import com.redstart.server.core.socket.jsonclasses.SpellJson;
 
 public interface Spell {
     void activate();
