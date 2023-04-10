@@ -3,6 +3,7 @@ package com.redstart.server.core.gamemechanics;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.redstart.server.core.gamemechanics.logicstrategy.BasicMonsterMoveLogicImpl;
 import com.redstart.server.core.gamemechanics.logicstrategy.BasicUpdateSpeedLogicImpl;
+import com.redstart.server.core.gamemechanics.spells.ArrowSpell;
 import com.redstart.server.core.gamemechanics.spells.FireBallSpell;
 import com.redstart.server.core.gamemechanics.spells.NextDamageProtectionSpell;
 import com.redstart.server.core.gamemechanics.spells.StanSpell;
@@ -45,6 +46,9 @@ public class GameRoom {
         player.addAvailableSpell(new NextDamageProtectionSpell(this,
                 20,
                 0));
+        player.addAvailableSpell(new ArrowSpell(this,
+                10,
+                10));
 
         monster = new Monster(
                 "Sladkoeshka",
