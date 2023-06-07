@@ -1,52 +1,44 @@
 package com.redstart.server.core.socket.message.responsedata.user;
 
+import com.redstart.server.core.dto.*;
+import com.redstart.server.core.socket.message.responsedata.ErrorResponse;
 import com.redstart.server.core.socket.message.responsedata.ISocketMessageResponseData;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class LoginResponseData implements ISocketMessageResponseData {
     private String login;
     private int level;
     private int money;
     private String message;
+    private int experience;
+    //Ниже новое:
+    private List<SpellForUserDTO> spellsForUser; // заклинания юзера
+    private List<LevelCompletedDTO> levelsCompleted; // завершенные уровни
 
-    public LoginResponseData() {
-    }
+    //Общая информация:
+    private List<IslandDTO> islands; // все острова
 
-    public LoginResponseData(String login, int level, int money, String message) {
-        this.login = login;
-        this.level = level;
-        this.money = money;
-        this.message = message;
-    }
 
-    public String getLogin() {
-        return login;
-    }
+    public static LoginResponseData ofSuccess(UserDTO user,
+                                              List<IslandDTO> islands,
+                                              String message) {
+        LoginResponseData data = new LoginResponseData();
+        data.setLogin(user.getLogin());
+        data.setLevel(user.getLevel());
+        data.setMoney(user.getMoney());
+        data.setMessage(message);
+        data.setExperience(user.getExperience());
 
-    public void setLogin(String login) {
-        this.login = login;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public int getLevel() {
-        return level;
-    }
-
-    public void setLevel(int level) {
-        this.level = level;
-    }
-
-    public int getMoney() {
-        return money;
-    }
-
-    public void setMoney(int money) {
-        this.money = money;
+        data.setSpellsForUser(user.getSpellsForUser());
+        data.setLevelsCompleted(user.getLevelsCompleted());
+        data.setIslands(islands);
+        return data;
     }
 }

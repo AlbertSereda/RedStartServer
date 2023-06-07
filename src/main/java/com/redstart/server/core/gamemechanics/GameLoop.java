@@ -1,7 +1,7 @@
 package com.redstart.server.core.gamemechanics;
 
-import com.redstart.server.core.socket.SocketClient;
 import com.redstart.server.core.gamemechanics.spells.interfaces.WithTimeSpell;
+import com.redstart.server.core.socket.SocketClient;
 import com.redstart.server.core.socket.jsonclasses.Monster;
 import com.redstart.server.core.socket.jsonclasses.Player;
 import com.redstart.server.core.socket.message.SocketDataUpdater;
@@ -42,7 +42,6 @@ public class GameLoop implements Runnable {
         new Thread(this).start();
     }
 
-    //TODO из за паузы не удаляются комнаты
     @Override
     public void run() {
         while (true) {
@@ -57,6 +56,15 @@ public class GameLoop implements Runnable {
                 GameState gameState = gameRoom.getAdventureData().getGameState();
 
                 switch (gameState) {
+                    case LEAVE:
+                        dataUpdater.updateFrame(SocketEventType.ADVENTURE_UPDATE_FRAME, socketClient, AdventureResponseData.of(gameRoom));
+                        gameOver(socketClient, gameRoom, false);
+                        break;
+                    case CREATING:
+                        if (!socketClient.getSocketChannel().isConnected()) {
+                            gameOver(socketClient, gameRoom, false);
+                        }
+                        break;
                     case WIN:
                     case LOSE:
                         clearActiveSpell(gameRoom);
@@ -88,7 +96,7 @@ public class GameLoop implements Runnable {
                         monster.setCurrentSpeed(currentSpeed);
                         if (monster.getCurrentSpeed() <= 0) {
                             //gameLogicExecutor.executeMove(socketClient, Move.MONSTER);
-                            dataUpdater.updateData(SocketEventType.ADVENTURE_MONSTER_STEP, new StepRequestData(), socketClient);
+                            dataUpdater.updateAdventureData(SocketEventType.ADVENTURE_MONSTER_STEP, new StepRequestData(), socketClient);
                             monster.setNewTimeCreation();
                         }
 
@@ -109,16 +117,17 @@ public class GameLoop implements Runnable {
                 }
                 boolean isGameOver = gameLogic.checkGameOver(socketClient, gameRoom);
                 if (isGameOver) {
-                    gameOver(socketClient, gameRoom);
+                    log.info("Game over {}, {}", gameRoom.getPlayer().getName(), gameRoom.getAdventureData().getGameState());
+                    dataUpdater.updateFrame(SocketEventType.ADVENTURE_UPDATE_FRAME, socketClient, AdventureResponseData.of(gameRoom));
+                    gameOver(socketClient, gameRoom, true);
                 }
             }
         }
     }
 
-    public void gameOver(SocketClient socketClient, GameRoom gameRoom) {
+    public void gameOver(SocketClient socketClient, GameRoom gameRoom, boolean isNeedSendToClient) {
         gameRoom.getIsGameOver().set(true);
-        dataUpdater.updateData(SocketEventType.ADVENTURE_GAME_OVER, new GameOverRequestData(socketClient), socketClient);
-        //gameLogicExecutor.executeGameOver(socketClient, gameRoom);
+        dataUpdater.updateUserData(SocketEventType.ADVENTURE_GAME_OVER, new GameOverRequestData(gameRoom), socketClient, isNeedSendToClient);
     }
 
     private void clearActiveSpell(GameRoom gameRoom) {

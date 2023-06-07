@@ -2,6 +2,8 @@ package com.redstart.server.core.socket.repository;
 
 import com.redstart.server.core.socket.SocketClient;
 import com.redstart.server.core.gamemechanics.GameRoom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +12,7 @@ import java.util.Optional;
 
 @Component
 public class GameRoomRepository {
+    private static final Logger log = LoggerFactory.getLogger(GameRoomRepository.class);
 
     private final Map<SocketClient, GameRoom> gameRooms;
 
@@ -30,6 +33,11 @@ public class GameRoomRepository {
     }
 
     public void removeGameRoom(SocketClient socketClient) {
-        gameRooms.remove(socketClient);
+        GameRoom removeGameRoom = gameRooms.remove(socketClient);
+        if (removeGameRoom != null) {
+            log.info("Removed game room {}", removeGameRoom.getPlayer().getName());
+        } else {
+            log.error("Failed remove game room {} ", socketClient.getLogin());
+        }
     }
 }

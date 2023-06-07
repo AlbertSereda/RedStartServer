@@ -1,8 +1,13 @@
 package com.redstart.server.core.socket.message;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.redstart.server.core.socket.SocketClient;
 import com.redstart.server.core.socket.message.processor.ISocketEventProcessor;
 import com.redstart.server.core.socket.message.responsedata.ISocketMessageResponseData;
+import com.redstart.server.exception.ClientIsDisconnectException;
+import com.redstart.server.exception.GameRoomNotFoundException;
+import com.redstart.server.exception.NotFoundProcessorException;
+import com.redstart.server.exception.UnauthorizedUserProcessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -16,13 +21,20 @@ public class SocketMessageHandler {
     private final ExecutorService executorService;
     private final JsonMessageConverter jsonMessageConverter;
     private final SocketEventFactory socketEventFactory;
+    private final ExecutorService adventureGameExecutor;
+    private final ExecutorService userMessageExecutor;
+
 
     public SocketMessageHandler(@Qualifier("socketMessageHandlerExecutor") ExecutorService executorService,
                                 JsonMessageConverter jsonMessageConverter,
-                                SocketEventFactory socketEventFactory) {
+                                SocketEventFactory socketEventFactory,
+                                @Qualifier("adventureGameExecutor") ExecutorService adventureGameExecutor,
+                                @Qualifier("userMessageExecutor") ExecutorService userMessageExecutor) {
         this.executorService = executorService;
         this.jsonMessageConverter = jsonMessageConverter;
         this.socketEventFactory = socketEventFactory;
+        this.adventureGameExecutor = adventureGameExecutor;
+        this.userMessageExecutor = userMessageExecutor;
     }
 
     public void handle(String message, SocketClient socketClient) {
@@ -33,31 +45,68 @@ public class SocketMessageHandler {
             String lastString = "";
 
             for (String str : messageSplit) {
+                if (str.equals(".")) {
+                    continue;
+                }
                 if (!lastString.equals(str)) {
                     //executeMove(socketClient, Move.PLAYER, messageSplit[i]);
-                    handleMessage(str, socketClient);
-                    lastString = str;
+                    try {
+                        SocketMessage socketMessage = jsonMessageConverter.jsonToSocketMessage(str);
+                        if (socketMessage.getEventType().isAdventureType()) {
+                            handleAdventureMessage(socketMessage, socketClient);
+                        } else {
+                            handleUserMessage(socketMessage, socketClient);
+                        }
+                        lastString = str;
+                    } catch (JsonProcessingException e) {
+                        log.error("Error convert JSON to SocketMessage : {}", str, e);
+                    }
                 }
             }
         });
     }
 
+    private void handleAdventureMessage(SocketMessage socketMessage, SocketClient socketClient) {
+        adventureGameExecutor.execute(() -> handleMessage(socketMessage, socketClient));
+    }
+
+    private void handleUserMessage(SocketMessage socketMessage, SocketClient socketClient) {
+        userMessageExecutor.execute(() -> handleMessage(socketMessage, socketClient));
+    }
+
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private void handleMessage(String message, SocketClient socketClient) {
+    private void handleMessage(SocketMessage socketMessage, SocketClient socketClient) {
         try {
-            SocketMessage socketMessage = jsonMessageConverter.jsonToSocketMessage(message);
             SocketEventType eventType = socketMessage.getEventType();
 
             ISocketEventProcessor eventProcessor = socketEventFactory.getEventProcessor(eventType)
-                    .orElseThrow(() -> new IllegalStateException("Not found ISocketEventProcessor for - " + socketMessage.getEventType()));
+                    .orElseThrow(() -> new NotFoundProcessorException("Not found ISocketEventProcessor for - " + socketMessage.getEventType()));
 
-            ISocketMessageResponseData responseData = eventProcessor.process(socketMessage.getData(), socketClient);
+            try {
+                ISocketMessageResponseData responseData = eventProcessor.process(socketMessage.getData(), socketClient);
+                socketMessage.setData(responseData);
+            } catch (IllegalStateException e) {
+                log.info(e.getMessage(), e);
+                socketMessage.setData(null);
+                socketMessage.setError(e.getMessage());
+            }
 
-            socketMessage.setData(responseData);
+            if (!socketClient.getSocketChannel().isConnected()) {
+                throw new ClientIsDisconnectException("Client is disconnect " + socketClient.getSocketChannel());
+            }
 
-            socketClient.addToWriteObject(socketMessage);
+            if (!SocketEventType.noResponse(eventType)) {
+                log.info("Send to {}, message {}", socketClient.getLogin(), socketMessage);
+                socketClient.addToWriteObject(socketMessage);
+            }
+        } catch (UnauthorizedUserProcessException | GameRoomNotFoundException e) {
+            log.info(e.getMessage());
+        } catch (ClientIsDisconnectException e) {
+            log.info("Impossible send data", e);
+        } catch (NotFoundProcessorException e) {
+            log.error(e.getMessage(), e);
         } catch (Exception e) {
-            log.error("Какая то ошибка, надо обработать", e);
+            log.error("Unknown Error", e);
         }
     }
 }

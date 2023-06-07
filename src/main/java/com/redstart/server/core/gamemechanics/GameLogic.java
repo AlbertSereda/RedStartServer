@@ -2,13 +2,15 @@ package com.redstart.server.core.gamemechanics;
 
 import com.redstart.server.core.socket.SocketClient;
 import com.redstart.server.core.gamemechanics.block.ColorBlock;
-import com.redstart.server.core.gamemechanics.spells.interfaces.Spell;
+import com.redstart.server.core.gamemechanics.spells.interfaces.ISpell;
 import com.redstart.server.core.socket.jsonclasses.Monster;
 import com.redstart.server.core.socket.jsonclasses.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,17 +22,19 @@ public class GameLogic {
 
     private static final int LENGTH_FIELD = 9;
     private static final int COUNT_COLOR = 4;
-
+    private static final int NUMBER_MONEY = 4;
     private static final int INDEX_NAME = 0;
     private static final int INDEX_CLIENT = 1;
     private static final int INDEX_COLOR = 2;
 
     private final Map<Integer, ColorBlock> colorBlocks;
+    private final double chanceMoney;
 
 
-    public GameLogic(Set<ColorBlock> colorBlocks) {
+    public GameLogic(Set<ColorBlock> colorBlocks,
+                     @Value("${adventure.chanceMoney}") int chanceMoney) {
         this.colorBlocks = colorBlocks.stream().collect(Collectors.toMap(ColorBlock::getNumberBlock, colorBlock -> colorBlock));
-        //colorBlocks = new ColorBlockInitializer().getColorBlocks();
+        this.chanceMoney = chanceMoney / 100.;
     }
 
     public void fillFieldForServer(Player player) {
@@ -75,7 +79,12 @@ public class GameLogic {
     }
 
     private int getRandomColor() {
-        return (int) (Math.random() * COUNT_COLOR);
+        double randomNumber = Math.random();
+        if (randomNumber < chanceMoney) {
+            return NUMBER_MONEY;
+        } else {
+            return (int) (randomNumber * COUNT_COLOR);
+        }
     }
 
 
@@ -255,9 +264,9 @@ public class GameLogic {
 
     public void spellMove(GameRoom gameRoom, String nameSpell) {
         Player player = gameRoom.getPlayer();
-        Map<String, Spell> availableSpells = player.getAvailableSpellsForServer();
+        Map<String, ISpell> availableSpells = player.getAvailableSpellsForServer();
 
-        Spell spell = availableSpells.get(nameSpell);
+        ISpell spell = availableSpells.get(nameSpell);
         if (spell != null) {
             int costSpell = spell.getCost();
             int mana = player.getMana();
@@ -291,13 +300,16 @@ public class GameLogic {
         boolean isGameOver = false;
 
         GameState gameState = gameRoom.getAdventureData().getGameState();
-
         if ((gameRoom.getPlayer().getHp() <= 0) ||
-                ((gameState == GameState.RESUME || gameState == GameState.PAUSE) && !socketClient.getSocketChannel().isConnected())) {
+                ((gameState != GameState.WIN &&
+                        gameState != GameState.LOSE &&
+                        gameState != GameState.CREATING) && !socketClient.getSocketChannel().isConnected())) {
             gameRoom.getAdventureData().setGameState(GameState.LOSE);
+            gameRoom.setEndGame(LocalDateTime.now());
             isGameOver = true;
         } else if (gameRoom.getMonster().getHp() <= 0) {
             gameRoom.getAdventureData().setGameState(GameState.WIN);
+            gameRoom.setEndGame(LocalDateTime.now());
             isGameOver = true;
         }
         return isGameOver;

@@ -14,7 +14,8 @@ public class BasicMonsterMoveLogicImpl implements MonsterMoveLogic {
 
     public void monsterMove() {
         GameLogic gameLogic = gameRoom.getGameLogic();
-        int damage = (int) (Math.random() * 10) + 20;
+        //int damage = (int) (Math.random() * 10) + 20;
+        int damage = 20;
         gameLogic.decrementPlayerHp(gameRoom.getPlayer(), damage);
     }
 }

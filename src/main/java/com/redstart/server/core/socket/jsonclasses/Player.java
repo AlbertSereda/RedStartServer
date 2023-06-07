@@ -1,7 +1,7 @@
 package com.redstart.server.core.socket.jsonclasses;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.redstart.server.core.gamemechanics.spells.interfaces.Spell;
+import com.redstart.server.core.gamemechanics.spells.interfaces.ISpell;
 import com.redstart.server.core.gamemechanics.spells.interfaces.WithTimeSpell;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,21 +16,25 @@ public class Player {
     private int hp;
     private int mana;
     private int shield;
+    private int earnedMoney = 0;
     @JsonIgnore
     private int[][][] fieldForServer; //имя, индекс, цвет
     private List<Integer> blastedBlocks; //имена уничтоженных
     private List<int[]> spawnedBlocks; //массив заспавненых имя, индекс, цвет.
     @JsonIgnore
-    private final Map<String, Spell> availableSpellsForServer;
+    private Map<String, ISpell> availableSpellsForServer;
     @JsonIgnore
-    private final List<WithTimeSpell> activeSpellForServer;
+    private List<WithTimeSpell> activeSpellForServer;
 
-    private final Set<SpellJson> availableSpells;
+    private Set<SpellJson> availableSpells;
 
     //private final Set<SpellJson> activeSpells;
 
     @JsonIgnore
     private int nextNameBlock = 1;
+
+    public Player() {
+    }
 
     public Player(String name, int hp, int mana, int shield) {
         this.name = name;
@@ -46,7 +50,7 @@ public class Player {
         //activeSpells = new HashSet<>();
     }
 
-    public void addAvailableSpell(Spell spell) {
+    public void addAvailableSpell(ISpell spell) {
         availableSpellsForServer.put(spell.getNameSpell(), spell);
         //availableSpells.add(spell.getNameSpell());
 
@@ -133,7 +137,7 @@ public class Player {
         this.shield = shield;
     }
 
-    public Map<String, Spell> getAvailableSpellsForServer() {
+    public Map<String, ISpell> getAvailableSpellsForServer() {
         return availableSpellsForServer;
     }
 
@@ -148,4 +152,26 @@ public class Player {
 //    public Set<SpellJson> getActiveSpells() {
 //        return activeSpells;
 //    }
+
+    public void setAvailableSpells(Set<SpellJson> availableSpells) {
+        this.availableSpells = availableSpells;
+    }
+
+    public int getEarnedMoney() {
+        return earnedMoney;
+    }
+
+    public void setEarnedMoney(int earnedMoney) {
+        this.earnedMoney = earnedMoney;
+    }
+
+    @Override
+    public String toString() {
+        return "Player{" +
+                "name='" + name + '\'' +
+                ", hp=" + hp +
+                ", mana=" + mana +
+                ", shield=" + shield +
+                '}';
+    }
 }

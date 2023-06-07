@@ -20,7 +20,7 @@ public class JsonMessageConverter {
         try {
             return objectMapper.writeValueAsBytes(object);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Error convert object to JSON");
+            throw new RuntimeException(e);
         }
     }
 
@@ -35,13 +35,7 @@ public class JsonMessageConverter {
 //        return number;
 //    }
 
-    public SocketMessage jsonToSocketMessage(String message) {
-        try {
-            return objectMapper.readValue(message, SocketMessage.class);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error convert JSON to SocketMessage - " + message);
-        }
+    public SocketMessage jsonToSocketMessage(String message) throws JsonProcessingException {
+        return objectMapper.readValue(message, SocketMessage.class);
     }
-
 }

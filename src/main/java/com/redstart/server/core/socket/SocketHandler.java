@@ -87,14 +87,12 @@ public class SocketHandler implements Runnable {
                         } catch (CancelledKeyException e) {
                             log.info("Client is disconnect");
                             channels.remove(socketChannel);
-                            //gameRoomExecutor.removeGameRoom(socketChannel);
                             log.info("Count connection object in map - " + channels.size());
                         } catch (IOException e) {
                             log.info("Connection close " + socketChannel);
                             try {
                                 socketChannel.close();
                                 channels.remove(socketChannel);
-                                //gameRoomExecutor.removeGameRoom(socketChannel);
                                 log.info("Count connection object in map - " + channels.size());
                             } catch (IOException ex) {
                                 log.warn("Connection close error ", ex);
@@ -115,6 +113,8 @@ public class SocketHandler implements Runnable {
         try {
             SocketChannel socketChannel = serverSocketChannel.accept();
             socketChannel.configureBlocking(false);
+
+            //добавить проверку на повторное подключение с существующего айпи ([0-9]{1,3}[\.]){3}[0-9]{1,3}
 
             SocketClient socketClient = new SocketClient(socketChannel, this, selector, jsonMessageConverter);
 
@@ -139,20 +139,17 @@ public class SocketHandler implements Runnable {
 //        }
 
         if (bytesRead == -1) {
-            log.info("Connection close " + socketChannel);
             throw new IOException();
         } else if ((bytesRead > 0 && readBuffer.get(readBuffer.position() - 1) == '\n')) {
             readBuffer.flip();
-            //byte[] bytes = new byte[readBuffer.remaining()];
-            //readBuffer.get(bytes);      //получаем массив байтов
 
-            //TODO избавиться от постоянного создания стринг
+            //TODO избавиться от постоянного создания String
             String clientMessage = new String(readBuffer.array(), readBuffer.position(), readBuffer.limit());
-
-            log.info("message from client - " + clientMessage.replaceAll("[\\n\\r]", ""));
-            //gameLogicExecutor.addTasksToExecute(socketClient, clientMessage);
-
-            socketMessageHandler.handle(clientMessage, socketClient);
+            String formatMessage = clientMessage.replaceAll("[\\n\\r]", "");
+            if (!formatMessage.equals(".")) {
+                log.info("message from client {} - {}", socketClient.getLogin(), formatMessage);
+                socketMessageHandler.handle(clientMessage, socketClient);
+            }
 
             readBuffer.clear();
         }
@@ -184,7 +181,10 @@ public class SocketHandler implements Runnable {
         socketChannel.write(writeBuffer);
 
         if (!writeBuffer.hasRemaining()) {
-            //log.info("отправили");
+//            log.info("отправили");
+//            log.info(writeBuffer.position() + " : " + writeBuffer.limit());
+//            log.info(new String(writeBuffer.array()));
+
             writeBuffer.compact();
             writeBuffer.clear();
             Queue<byte[]> writeToSocketQueue = socketClient.getWriteToSocketQueue();

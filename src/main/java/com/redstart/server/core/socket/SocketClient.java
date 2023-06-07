@@ -16,9 +16,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class SocketClient {
     private static final Logger log = LoggerFactory.getLogger(SocketClient.class);
 
-    private static final int READ_BUFFER_CAPACITY = 3000;
+    private static final int READ_BUFFER_CAPACITY = 8000;
 
-    private static final int WRITE_BUFFER_CAPACITY = 3000;
+    private static final int WRITE_BUFFER_CAPACITY = 8000;
 
     private final SocketChannel socketChannel;
 
@@ -49,6 +49,7 @@ public class SocketClient {
 
     public void addToWriteObject(SocketMessage socketMessage) {
         byte[] sendMessage = jsonMessageConverter.objectToJson(socketMessage);
+        //log.info(new String(sendMessage));
         writeToBuffer(sendMessage);
     }
 

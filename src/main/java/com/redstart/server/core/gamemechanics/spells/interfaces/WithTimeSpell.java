@@ -1,6 +1,6 @@
 package com.redstart.server.core.gamemechanics.spells.interfaces;
 
-public interface WithTimeSpell extends Spell {
+public interface WithTimeSpell extends ISpell {
 
     long getTimeToEnd();
 

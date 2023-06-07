@@ -8,13 +8,12 @@ import org.slf4j.LoggerFactory;
 
 public class FireBallSpell implements OneTimeSpell {
     private static final Logger log = LoggerFactory.getLogger(FireBallSpell.class);
-    private final GameRoom gameRoom;
+    private GameRoom gameRoom;
     private final int cost;
     private final int damage;
     private final SpellJson spellJson;
 
-    public FireBallSpell(GameRoom gameRoom, int cost, int damage) {
-        this.gameRoom = gameRoom;
+    public FireBallSpell(int cost, int damage) {
         this.cost = cost;
         this.damage = damage;
         spellJson = SpellJson.spellJsonConverter(this);
@@ -41,5 +40,10 @@ public class FireBallSpell implements OneTimeSpell {
     @Override
     public SpellJson getSpellJson() {
         return spellJson;
+    }
+
+    @Override
+    public void setGameRoom(GameRoom gameRoom) {
+        this.gameRoom = gameRoom;
     }
 }

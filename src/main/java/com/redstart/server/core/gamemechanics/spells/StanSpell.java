@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 public class StanSpell implements WithTimeSpell, UpdateSpeedLogic {
     private static final Logger log = LoggerFactory.getLogger(StanSpell.class);
-    private final GameRoom gameRoom;
+    private GameRoom gameRoom;
     private final Integer cost;
 
     private final long durationTime;
@@ -25,8 +25,7 @@ public class StanSpell implements WithTimeSpell, UpdateSpeedLogic {
     private boolean isActive;
     private final SpellJson spellJson;
 
-    public StanSpell(GameRoom gameRoom, Integer cost, long durationTime, Integer damage) {
-        this.gameRoom = gameRoom;
+    public StanSpell(Integer cost, long durationTime, Integer damage) {
         this.cost = cost;
         this.durationTime = durationTime;
         timeToEnd = 0L;
@@ -115,6 +114,11 @@ public class StanSpell implements WithTimeSpell, UpdateSpeedLogic {
     @Override
     public SpellJson getSpellJson() {
         return spellJson;
+    }
+
+    @Override
+    public void setGameRoom(GameRoom gameRoom) {
+        this.gameRoom = gameRoom;
     }
 
     @Override
